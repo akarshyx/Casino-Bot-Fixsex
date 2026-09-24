@@ -188,15 +188,38 @@ def _main_menu_keyboard(user_id: str):
     """Build the main menu with labels in the player's selected language."""
     uid = str(user_id)
     return InlineKeyboardMarkup([
-        [danger_btn(_tr(uid, "btn_stuck_deposits"), callback_data="report_stuck_deposit")],
-        [primary_btn(_tr(uid, "btn_games"), callback_data="games_category_selection")],
+        [danger_btn(
+            _button_label_without_leading_icon(_tr(uid, "btn_stuck_deposits")),
+            callback_data="report_stuck_deposit",
+            icon_custom_emoji_id=_custom_button_emoji("❗️", "6305108820565696461"),
+        )],
+        [primary_btn(
+            _button_label_without_leading_icon(_tr(uid, "btn_games")),
+            callback_data="games_category_selection",
+            icon_custom_emoji_id=_custom_button_emoji("🎮", "6305146547558425666"),
+        )],
         [
-            success_btn(_tr(uid, "btn_deposit"), callback_data="back_to_deposit",
-                        icon_custom_emoji_id="6305554908753959942"),
-            primary_btn(_tr(uid, "btn_withdraw"), callback_data="crypto_withdrawals"),
+            success_btn(
+                _button_label_without_leading_icon(_tr(uid, "btn_deposit")),
+                callback_data="back_to_deposit",
+                icon_custom_emoji_id=_custom_button_emoji("💰", "6305469894171305786"),
+            ),
+            primary_btn(
+                _button_label_without_leading_icon(_tr(uid, "btn_withdraw")),
+                callback_data="crypto_withdrawals",
+                icon_custom_emoji_id=_custom_button_emoji("💵", WALLET_EMOJI_ID),
+            ),
         ],
-        [primary_btn(_tr(uid, "btn_refer"), callback_data="ref_command")],
-        [InlineKeyboardButton(_tr(uid, "btn_settings"), callback_data="settings_menu")],
+        [primary_btn(
+            _button_label_without_leading_icon(_tr(uid, "btn_refer")),
+            callback_data="ref_command",
+            icon_custom_emoji_id=_custom_button_emoji("💰", "6305469894171305786"),
+        )],
+        [primary_btn(
+            _button_label_without_leading_icon(_tr(uid, "btn_settings")),
+            callback_data="settings_menu",
+            icon_custom_emoji_id=_custom_button_emoji("⚙️", "6303187879262692745"),
+        )],
     ])
 
 # Registry: {message_id (int): owner_user_id (str)} — persists after active_games entry
@@ -298,6 +321,24 @@ def _emoji_map_for_context() -> dict:
 def _button_label(text: str) -> str:
     """Return button-safe text while keeping the custom emoji fallback."""
     return _TG_EMOJI_TAG_RE.sub("", str(text))
+
+
+def _button_label_without_leading_icon(text: str) -> str:
+    """Remove legacy Unicode icon prefixes before a custom button icon."""
+    label = _button_label(text).strip()
+    for icon in (
+        "⚠️", "⚠", "🎮", "💰", "💸", "💵", "👛", "⚙️", "⚙",
+        "💳", "🪙", "🎁", "📥", "📤",
+    ):
+        if label.startswith(icon):
+            return label[len(icon):].strip()
+    return label
+
+
+def _custom_button_emoji(symbol: str, fallback_id: str | None = None) -> str | None:
+    """Resolve a loaded pack icon without putting a casual emoji in button text."""
+    return CUSTOM_EMOJI_MAP.get(symbol) or fallback_id
+
 
 def _button_custom_emoji_id(text: str) -> str | None:
     """Extract a custom emoji id for Telegram's button icon field."""
@@ -4346,24 +4387,32 @@ def _rc_end_keyboard(game_name: str, dice_format: str, bet_amount: float,
     Callback payloads intentionally stay identical to the existing handlers.
     Only the visible labels and button icons are presentation changes.
     """
+    # Use the exact action artwork from RollersBlackJack_by_rollersgamebot,
+    # not the general casino pack.  The fallback IDs keep the buttons correct
+    # when Telegram's startup pack refresh is unavailable.
+    blackjack_icons = globals().get("_BJ_BUTTON_EMOJI_IDS", {})
+    repeat_icon = blackjack_icons.get("replay", "6170240271876366946")
+    double_icon = blackjack_icons.get("double", "6169935178874494714")
+    change_mode_icon = blackjack_icons.get("card_back", "6169976432035375071")
+
     return InlineKeyboardMarkup([
         [
             success_btn(
                 "Repeat",
                 callback_data=f"{game_name}_repeat_{dice_format}_{bet_amount}_{mode_char}",
-                icon_custom_emoji_id=CUSTOM_EMOJI_MAP.get("🔄"),
+                icon_custom_emoji_id=repeat_icon,
             ),
             primary_btn(
                 "×2 Double",
                 callback_data=f"{game_name}_double_{dice_format}_{bet_amount}_{mode_char}",
-                icon_custom_emoji_id=CUSTOM_EMOJI_MAP.get("💰"),
+                icon_custom_emoji_id=double_icon,
             ),
         ],
         [
             danger_btn(
                 "Change mode",
                 callback_data=f"{game_name}_changemode_{bet_amount}",
-                icon_custom_emoji_id=CUSTOM_EMOJI_MAP.get("⚙️"),
+                icon_custom_emoji_id=change_mode_icon,
             )
         ],
     ])
@@ -13307,7 +13356,7 @@ def _build_insufficient_funds_view(user_id: str) -> tuple[str, InlineKeyboardMar
             success_btn(
                 "Deposit",
                 callback_data="crypto_deposits",
-                icon_custom_emoji_id="6305554908753959942",
+                icon_custom_emoji_id=_custom_button_emoji("💰", "6305469894171305786"),
             )
         ],
     ]
@@ -13357,13 +13406,17 @@ def _build_balance_view(user_id: str) -> tuple[str, InlineKeyboardMarkup]:
             success_btn(
                 "Deposit",
                 callback_data="crypto_deposits",
-                icon_custom_emoji_id="6305554908753959942",
+                icon_custom_emoji_id=_custom_button_emoji("💰", "6305469894171305786"),
             ),
-            InlineKeyboardButton("💸 Withdraw", callback_data="crypto_withdrawals"),
+            primary_btn(
+                "Withdraw",
+                callback_data="crypto_withdrawals",
+                icon_custom_emoji_id=_custom_button_emoji("💵", WALLET_EMOJI_ID),
+            ),
         ],
         [
             primary_btn(
-                f"Coin balance {'✅' if selected == 'coins' else '❌'}",
+                "Coin balance",
                 callback_data="wallet_toggle",
                 icon_custom_emoji_id=CASINO_COINS_EMOJI_ID,
             )
