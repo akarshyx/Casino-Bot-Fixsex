@@ -39728,8 +39728,12 @@ def _bj_fmt_card(rank, suit):
     return f'{rank}{suit}'
 
 def _bj_hand_display_rows(hand, hide_second=False):
-    """Return (ranks_line, suits_line) using <tg-emoji> tags from bj_by_rollersgamebot pack.
-    Fallback chars exactly match the sticker pack emoji fields to avoid Entity_text_invalid."""
+    """Return rank-card and suit lines using the Blackjack pack.
+
+    The pack contains rank-card stickers but no suit stickers.  The suit line
+    remains available to the legacy helper, while the live Blackjack renderer
+    intentionally shows only the pack's rank cards.
+    """
     ranks = []
     suits = []
     for i, card in enumerate(hand):
@@ -39850,8 +39854,8 @@ def _bj_render(
     dealer_shown = _bj_hand_value([dealer_hand[0]]) if hide_dealer else d_val
     d_label = dealer_shown if hide_dealer else d_val
 
-    dealer_ranks, dealer_suits = _bj_hand_display_rows(dealer_hand, hide_second=hide_dealer)
-    player_ranks, player_suits = _bj_hand_display_rows(player_hand)
+    dealer_ranks, _dealer_suits = _bj_hand_display_rows(dealer_hand, hide_second=hide_dealer)
+    player_ranks, _player_suits = _bj_hand_display_rows(player_hand)
 
     if win_display is None:
         win_display = bet_display if status in {'win', 'blackjack'} else '0.00'
@@ -39876,10 +39880,10 @@ def _bj_render(
         "<blockquote>"
         f"{dealer_icon} <b>Dealer's hand {d_label}</b>\n"
         f"{dealer_ranks}\n"
-        f"{dealer_suits}\n\n"
+        f"\n"
         f"{player_icon} <b>Player's hand {p_val}</b>\n"
         f"{player_ranks}\n"
-        f"{player_suits}\n\n"
+        f"\n"
         f"{money_lines}"
         "</blockquote>"
     )
