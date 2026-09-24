@@ -1,0 +1,296 @@
+ROLLERS CASINO — ANIMATED GAMES: ULTRA-FAST & HIGH-CONCURRENCY FIX
+
+IMPORTANT: Work ONLY on these five animated games: Dice, Darts, Basketball, Soccer, and Bowling. Do not modify unrelated casino games or systems.
+
+The current animated games have serious performance, concurrency, and state-management bugs. I need the underlying problems fixed properly — not temporary workarounds.
+
+1. EXTREME SPEED + RELIABILITY
+
+The bot’s animated-game engine must be extremely fast and responsive.
+
+The bot should process game actions with the minimum practical latency while remaining completely reliable.
+
+There must be:
+
+* No lag
+* No freezing
+* No crashes
+* No stuck games
+* No repeated messages
+* No repeated roll warnings
+* No ghost rolls
+* No delayed rolls executing later
+* No duplicated results
+* No game-state corruption
+
+Even if thousands of players are simultaneously playing these animated games in the same chat, the bot must remain responsive and each player’s game must continue independently.
+
+Do not simply add delays, increase timeouts, or suppress errors to make the problem appear fixed. Fix the underlying concurrency and state-management architecture.
+
+⸻
+
+2. HIGH-CONCURRENCY REQUIREMENT
+
+The bot must be designed so that one player’s game never blocks another player’s game.
+
+For example, if 5,000 players are active in the same chat:
+
+* Player A’s game must not affect Player B’s game.
+* Player A’s roll must never be processed as Player B’s roll.
+* One game must not wait for another game to finish.
+* One animation must not block other animations.
+* One player’s rapid rolls must not slow down everyone else.
+* One game’s exception must not crash the bot.
+* The bot must not start sending repeated responses because of load.
+
+Every active game needs isolated state.
+
+Inspect and fix:
+
+* Global/shared mutable game state
+* Race conditions
+* Async task conflicts
+* Blocking operations
+* Incorrect locks
+* Duplicate handlers
+* Duplicate background tasks
+* Incorrect session identification
+* Database race conditions
+* Message/update processing conflicts
+
+⸻
+
+3. PLAYER ROLL MUST BE INSTANT
+
+When it is the player’s turn:
+
+Player sends roll → bot validates it → bot processes it → bot returns the result/score immediately.
+
+Do not introduce unnecessary delays.
+
+The bot should not make the player wait because another player’s game is running.
+
+Thousands of concurrent games should not cause a queue where players have to wait for unrelated games.
+
+⸻
+
+4. BOT TURN MUST BE SUPER FAST
+
+When the player selects Play Against Bot:
+
+1. Bot tells the player that the bot rolls first.
+2. Bot immediately begins its rolls.
+3. Bot performs exactly the required number of rolls.
+4. The rolls happen quickly.
+5. As soon as the final bot roll is sent, immediately switch to PLAYER_TURN.
+6. Immediately tell the player that it is their turn.
+
+There must be no unnecessary delay between the bot’s final roll and the player’s turn.
+
+The bot should feel extremely fast, but never at the cost of incorrect game state.
+
+⸻
+
+5. ROLLS DURING BOT TURN
+
+If a player sends a roll while the bot is still rolling:
+
+DO NOT COUNT THE ROLL.
+
+Tell the player that it is not their turn yet.
+
+The invalid roll must never be queued and executed later.
+
+It must not:
+
+* Count toward the player’s roll limit
+* Change the score
+* Change the game state
+* Execute after BOT_TURN ends
+* Become a ghost roll
+* Affect another player
+
+⸻
+
+6. FIX REPEATED “TOO FAST” BUG
+
+There is currently a serious bug where players can trigger the same warning repeatedly when rolling quickly.
+
+For example:
+
+Don’t send rolls too fast
+
+must NOT appear again and again because of a broken state/async loop.
+
+If a player sends multiple invalid rolls, the bot must handle them safely without creating an infinite response loop.
+
+Fix the root cause rather than simply deleting the protection.
+
+The system must correctly identify:
+
+* Valid roll
+* Wrong-turn roll
+* Duplicate update
+* Already processed roll
+* Roll from another game
+* Roll after game completion
+* Rapid repeated roll
+
+⸻
+
+7. ZERO GHOST ROLLS
+
+Every roll must be associated with:
+
+* Exact game/session ID
+* Exact player ID
+* Exact turn
+* Exact roll number
+
+An old Telegram update must never modify a newer game.
+
+Example:
+
+Game A finishes → Game B starts → delayed roll from Game A arrives.
+
+That roll must be rejected immediately.
+
+It must NOT affect Game B.
+
+Duplicate Telegram updates must also be idempotent.
+
+⸻
+
+8. FIVE GAMES ONLY
+
+Apply these fixes only to:
+
+* 🎲 Dice
+* 🎯 Darts
+* 🏀 Basketball
+* ⚽ Soccer
+* 🎳 Bowling
+
+Do not change unrelated games.
+
+All five games must use safe, isolated game state.
+
+⸻
+
+9. BOT MUST NEVER CRASH
+
+An exception in one animated game must never bring down the entire bot.
+
+If one game encounters an unexpected error:
+
+* Catch the exception safely.
+* Keep the bot running.
+* Prevent the affected game from remaining in a broken state.
+* Clean up its background tasks.
+* Use the existing transaction/refund architecture safely.
+* Do not affect other active games.
+
+Do not hide errors silently. Log them properly so they can be diagnosed.
+
+⸻
+
+10. NO GLOBAL BOT BOTTLENECK
+
+Inspect the code for anything that causes all games to wait for one another.
+
+Avoid architecture where:
+
+Player A’s game is processing → Player B, C, D… must wait.
+
+Games must be processed independently wherever possible.
+
+Do not use unnecessary global locks around the entire game system.
+
+If locking is required, use the smallest possible scope so unrelated games remain independent.
+
+⸻
+
+11. ANIMATION TASKS
+
+Animation tasks must:
+
+* Start exactly once.
+* Run quickly.
+* Finish correctly.
+* Never duplicate.
+* Never continue after game completion.
+* Never affect another game.
+* Never block unrelated games.
+* Be properly cancelled/cleaned up when necessary.
+* Handle exceptions safely.
+
+Do not create duplicate schedulers or duplicate polling systems.
+
+⸻
+
+12. MONEY / GAME RESULT SAFETY
+
+Do not redesign the existing wallet or transaction system.
+
+But make sure high concurrency cannot cause:
+
+* Double bet deductions
+* Double payouts
+* Double refunds
+* Missing payouts
+* Missing refunds
+* Duplicate game settlement
+* A completed game being processed again
+
+Settlement must be idempotent.
+
+⸻
+
+13. STRESS TESTING
+
+Do not test only one player.
+
+Test the five animated games with increasingly heavy concurrency.
+
+At minimum test:
+
+* 1 game
+* 10 games
+* 50 games
+* 100+ simultaneous games
+* Rapid simultaneous rolls
+* Multiple players rolling at exactly the same time
+* Players rolling during BOT_TURN
+* Duplicate updates
+* Delayed updates
+* Games ending simultaneously
+* Multiple games in the same chat
+* Multiple games across different chats
+* Animation task failure
+* Bot restart/recovery
+
+Also inspect whether the architecture can handle thousands of simultaneous active players in one chat without a global bottleneck.
+
+Do not claim that 5,000 real users were tested unless they were actually tested. If a full 5,000-user load test cannot be run, perform a realistic concurrency/load simulation and clearly report the test size and results.
+
+⸻
+
+FINAL REQUIREMENT
+
+The animated-game system must feel instant even under extreme concurrent activity. Whether there are a few players or thousands of players playing Dice, Darts, Basketball, Soccer, and Bowling at the same time, the bot must not crash, lag, freeze, repeat messages, create ghost rolls, lose valid rolls, accept invalid rolls, or allow one player’s game to interfere with another player’s game.
+
+Speed is important, but correctness comes first. Do not achieve speed by removing validation or creating unsafe race conditions.
+
+Before declaring the work complete, report:
+
+1. Root cause of the performance/concurrency bugs.
+2. Files changed.
+3. Game-state changes.
+4. Async/concurrency changes.
+5. How duplicate/ghost rolls are prevented.
+6. How repeated-message loops are prevented.
+7. Stress tests performed.
+8. Maximum simulated concurrency tested.
+9. Any remaining limitations or risks.
+
+Do not modify anything outside Dice, Darts, Basketball, Soccer, and Bowling.
