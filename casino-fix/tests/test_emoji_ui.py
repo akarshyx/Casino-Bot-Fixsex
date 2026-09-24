@@ -89,7 +89,7 @@ class EmojiUiTests(unittest.TestCase):
         self.assertIn(main._BJ_RANK_EMOJI["A"], custom_ids)
         self.assertIn(main._BJ_RANK_EMOJI["7"], custom_ids)
         self.assertIn(main._BJ_RANK_EMOJI["9"], custom_ids)
-        self.assertIn(main._BJ_RANK_EMOJI["K"], custom_ids)
+        self.assertNotIn(main._BJ_RANK_EMOJI["K"], custom_ids)
         self.assertIn(main._BJ_HIDDEN_EMOJI_ID, custom_ids)
         self.assertEqual(kwargs["parse_mode"], None)
         self.assertNotIn("<tg-emoji", rendered)
