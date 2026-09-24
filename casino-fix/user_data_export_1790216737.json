@@ -1,9 +1,9 @@
 {
-  "timestamp": 1790216078.3833377,
-  "export_date": "Thu Sep 24 02:14:38 2026",
+  "timestamp": 1790216737.9357584,
+  "export_date": "Thu Sep 24 02:25:37 2026",
   "total_users": 4,
   "user_balances": {
-    "8598790977": 544.58,
+    "8598790977": 545.58,
     "8639404236": 0.95238096,
     "6333639925": 0.0,
     "1": 0.0
@@ -14,12 +14,12 @@
       "username": "arshxy",
       "first_name": "#1",
       "currency": "USD",
-      "lt_games": 18,
+      "lt_games": 19,
       "lt_wins": 3,
       "lt_won": 249.60000000000002,
-      "lt_wagered": 430.0,
+      "lt_wagered": 469.0,
       "lt_first_game_ts": 1788104270,
-      "lt_last_game_ts": 1790215697
+      "lt_last_game_ts": 1790216260
     },
     "6333639925": {
       "joined_at": 1790215010.7038858,
@@ -30,7 +30,7 @@
   },
   "user_levels": {},
   "user_wagering_totals": {
-    "8598790977": 732.0
+    "8598790977": 889.0
   },
   "user_match_history": {
     "8598790977": [
@@ -195,6 +195,15 @@
         "result": "loss",
         "winnings": 0,
         "profit": -20.0
+      },
+      {
+        "timestamp": 1790216260,
+        "id": "60519",
+        "game": "blackjack",
+        "bet": 39.0,
+        "result": "loss",
+        "winnings": 0,
+        "profit": -39.0
       }
     ]
   },
@@ -203,79 +212,9 @@
   "user_raffle_tickets": {},
   "pending_deposits": {},
   "pending_withdrawals": {},
-  "active_games": {
-    "8598790977": {
-      "_created_at": 1790215909.2849987,
-      "type": "blackjack",
-      "deck": [
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null
-      ],
-      "player_hand": [
-        null,
-        null
-      ],
-      "dealer_hand": [
-        null,
-        null
-      ],
-      "bet": 40.0,
-      "currency": "USDT",
-      "username": "arshxy",
-      "chat_id": 8598790977,
-      "msg_id": 39112,
-      "doubled": false,
-      "created_at": 1790215955
-    }
-  },
+  "active_games": {},
   "hilo_games": {},
   "crypto_house_balances": {
-    "USDT": 1525.3523809523808
+    "USDT": 1564.3523809523808
   }
 }

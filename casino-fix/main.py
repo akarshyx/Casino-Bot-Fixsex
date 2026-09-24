@@ -202,12 +202,10 @@ def _main_menu_keyboard(user_id: str):
             success_btn(
                 _button_label_without_leading_icon(_tr(uid, "btn_deposit")),
                 callback_data="back_to_deposit",
-                icon_custom_emoji_id=_custom_button_emoji("💰", "6305469894171305786"),
             ),
             primary_btn(
                 _button_label_without_leading_icon(_tr(uid, "btn_withdraw")),
                 callback_data="crypto_withdrawals",
-                icon_custom_emoji_id=_custom_button_emoji("💵", WALLET_EMOJI_ID),
             ),
         ],
         [primary_btn(

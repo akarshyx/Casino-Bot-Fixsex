@@ -13,7 +13,12 @@ class EmojiUiTests(unittest.TestCase):
             labels,
             ["Stuck Deposits", "Games", "Deposit", "Withdraw", "Refer and Earn", "Settings"],
         )
-        self.assertTrue(all(button.to_dict().get("icon_custom_emoji_id") for button in buttons))
+        self.assertTrue(buttons[0].to_dict().get("icon_custom_emoji_id"))
+        self.assertTrue(buttons[1].to_dict().get("icon_custom_emoji_id"))
+        self.assertIsNone(buttons[2].to_dict().get("icon_custom_emoji_id"))
+        self.assertIsNone(buttons[3].to_dict().get("icon_custom_emoji_id"))
+        self.assertTrue(buttons[4].to_dict().get("icon_custom_emoji_id"))
+        self.assertTrue(buttons[5].to_dict().get("icon_custom_emoji_id"))
 
     def test_post_round_actions_use_blackjack_pack_icons_and_keep_callbacks(self):
         markup = main._rc_end_keyboard("dice", "1d6", 10.0, "h")
