@@ -184,6 +184,14 @@ def _sync_translation_languages() -> None:
         _user_language(str(uid))
 
 
+# Exact menu artwork from rollerscasino_by_rollersgamebot:
+# pack entry 29 = the blue card Games icon; entry 95 = the orange
+# two-person/two-star Refer and Earn icon. Keep these explicit because the
+# pack contains duplicate Unicode metadata for some artwork.
+_MENU_GAMES_EMOJI_ID = "6305508428617883689"
+_MENU_REFER_EMOJI_ID = "6305399783125163364"
+
+
 def _main_menu_keyboard(user_id: str):
     """Build the main menu with labels in the player's selected language."""
     uid = str(user_id)
@@ -196,7 +204,7 @@ def _main_menu_keyboard(user_id: str):
         [primary_btn(
             _button_label_without_leading_icon(_tr(uid, "btn_games")),
             callback_data="games_category_selection",
-            icon_custom_emoji_id=_custom_button_emoji("🎮", "6305146547558425666"),
+            icon_custom_emoji_id=_MENU_GAMES_EMOJI_ID,
         )],
         [
             success_btn(
@@ -211,7 +219,7 @@ def _main_menu_keyboard(user_id: str):
         [primary_btn(
             _button_label_without_leading_icon(_tr(uid, "btn_refer")),
             callback_data="ref_command",
-            icon_custom_emoji_id=_custom_button_emoji("💰", "6305469894171305786"),
+            icon_custom_emoji_id=_MENU_REFER_EMOJI_ID,
         )],
         [primary_btn(
             _button_label_without_leading_icon(_tr(uid, "btn_settings")),

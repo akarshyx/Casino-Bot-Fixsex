@@ -15,9 +15,17 @@ class EmojiUiTests(unittest.TestCase):
         )
         self.assertTrue(buttons[0].to_dict().get("icon_custom_emoji_id"))
         self.assertTrue(buttons[1].to_dict().get("icon_custom_emoji_id"))
+        self.assertEqual(
+            buttons[1].to_dict()["icon_custom_emoji_id"],
+            main._MENU_GAMES_EMOJI_ID,
+        )
         self.assertIsNone(buttons[2].to_dict().get("icon_custom_emoji_id"))
         self.assertIsNone(buttons[3].to_dict().get("icon_custom_emoji_id"))
         self.assertTrue(buttons[4].to_dict().get("icon_custom_emoji_id"))
+        self.assertEqual(
+            buttons[4].to_dict()["icon_custom_emoji_id"],
+            main._MENU_REFER_EMOJI_ID,
+        )
         self.assertTrue(buttons[5].to_dict().get("icon_custom_emoji_id"))
 
     def test_post_round_actions_use_blackjack_pack_icons_and_keep_callbacks(self):
