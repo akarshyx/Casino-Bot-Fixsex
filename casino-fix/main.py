@@ -315,6 +315,11 @@ def _emoji_map_for_context() -> dict:
     """Use only the verified Rollers map on referral screens."""
     if _plain_emoji_context_cv.get() in {"simple", "rollers_referral"}:
         return _RAIKA_REFERRAL_EMOJI_MAP
+    if _plain_emoji_context_cv.get() == "blackjack":
+        # Blackjack supplies its own explicit <tg-emoji> tags.  Returning an
+        # empty map prevents unrelated casino-pack symbols from being injected
+        # into card suits, status labels, or balance text.
+        return {}
     return CUSTOM_EMOJI_MAP
 
 
@@ -10443,6 +10448,7 @@ def _install_premium_emoji_interceptor(bot) -> None:
         @functools.wraps(original)
         async def wrapper(self, *args, **kwargs):
             try:
+                is_blackjack_context = _plain_emoji_context_cv.get() == "blackjack"
                 txt = kwargs.get(text_kwarg)
                 # Also handle positional text arg (some internal PTB paths pass it positionally)
                 _txt_positional_idx = None
@@ -10454,7 +10460,7 @@ def _install_premium_emoji_interceptor(bot) -> None:
                             break
                 # Keep the literal fallback character from any legacy
                 # <tg-emoji> tag and discard its premium/custom ID.
-                if isinstance(txt, str):
+                if isinstance(txt, str) and not is_blackjack_context:
                     clean_txt = _strip_custom_emoji_markup(txt)
                     if clean_txt != txt:
                         if _txt_positional_idx is not None:
@@ -10466,6 +10472,10 @@ def _install_premium_emoji_interceptor(bot) -> None:
                         txt = clean_txt
                 emoji_map = _emoji_map_for_context()
                 if _plain_emoji_context_cv.get() == "plain":
+                    return await original(self, *args, **kwargs)
+                if is_blackjack_context:
+                    # Preserve Blackjack's explicit rank/action custom-emoji
+                    # tags exactly as authored; do not run the general mapper.
                     return await original(self, *args, **kwargs)
                 pm = kwargs.get("parse_mode")
                 # Unwrap PTB DefaultValue sentinel if needed
@@ -39699,7 +39709,7 @@ def _bj_card_tag(rank):
     return f'<b>{rank}</b>'
 
 def _bj_hidden_tag():
-    return f'<tg-emoji emoji-id="{_BJ_HIDDEN_EMOJI_ID}">💳</tg-emoji>'
+    return f'<tg-emoji emoji-id="{_BJ_HIDDEN_EMOJI_ID}">🂠</tg-emoji>'
 
 def _bj_tg(emoji_id, fallback):
     """Wrap in <tg-emoji> tag for custom emoji rendering."""
@@ -39726,9 +39736,11 @@ def _bj_hand_display_rows(hand, hide_second=False):
         if card is None:
             continue
         if hide_second and i == 1:
-            hidden = f'<tg-emoji emoji-id="{_BJ_HIDDEN_EMOJI_ID}">💳</tg-emoji>'
+            hidden = f'<tg-emoji emoji-id="{_BJ_HIDDEN_EMOJI_ID}">🂠</tg-emoji>'
             ranks.append(hidden)
-            suits.append(hidden)
+            # The Blackjack pack has one card-back sticker, not a separate
+            # suit sticker.  Show it once on the rank row and leave the suit
+            # row to the visible card(s) only.
         else:
             try:
                 rank, suit = card[0], card[1]
@@ -39782,25 +39794,33 @@ def _strip_tg_emoji(html: str) -> str:
 
 async def _bj_safe_reply(message, text: str, **kwargs):
     """Send a blackjack message; on Entity_text_invalid, retry with plain fallback text."""
+    context_token = _plain_emoji_context_cv.set("blackjack")
     try:
-        return await message.reply_text(text, **kwargs)
-    except Exception as e:
-        if 'entity' in str(e).lower() or 'invalid' in str(e).lower():
-            logger.warning(f"[BJ] tg-emoji failed, falling back to plain text: {e}")
-            plain = _strip_tg_emoji(text)
-            return await message.reply_text(plain, **kwargs)
-        raise
+        try:
+            return await message.reply_text(text, **kwargs)
+        except Exception as e:
+            if 'entity' in str(e).lower() or 'invalid' in str(e).lower():
+                logger.warning(f"[BJ] tg-emoji failed, falling back to plain text: {e}")
+                plain = _strip_tg_emoji(text)
+                return await message.reply_text(plain, **kwargs)
+            raise
+    finally:
+        _plain_emoji_context_cv.reset(context_token)
 
 async def _bj_safe_edit(query, text: str, **kwargs):
     """Edit a blackjack message; on Entity_text_invalid, retry with plain fallback text."""
+    context_token = _plain_emoji_context_cv.set("blackjack")
     try:
-        return await query.edit_message_text(text, **kwargs)
-    except Exception as e:
-        if 'entity' in str(e).lower() or 'invalid' in str(e).lower():
-            logger.warning(f"[BJ] tg-emoji edit failed, falling back to plain text: {e}")
-            plain = _strip_tg_emoji(text)
-            return await query.edit_message_text(plain, **kwargs)
-        raise
+        try:
+            return await query.edit_message_text(text, **kwargs)
+        except Exception as e:
+            if 'entity' in str(e).lower() or 'invalid' in str(e).lower():
+                logger.warning(f"[BJ] tg-emoji edit failed, falling back to plain text: {e}")
+                plain = _strip_tg_emoji(text)
+                return await query.edit_message_text(plain, **kwargs)
+            raise
+    finally:
+        _plain_emoji_context_cv.reset(context_token)
 
 def _bj_hidden_emoji():
     return '🂠'
@@ -39836,23 +39856,19 @@ def _bj_render(
     if win_display is None:
         win_display = bet_display if status in {'win', 'blackjack'} else '0.00'
 
+    # The Blackjack pack's card-back is the only header/status artwork.  Do
+    # not let the general casino emoji interceptor replace these with random
+    # dice, gems, checks, or other game-pack symbols.
     dealer_icon = _bj_tg(_BJ_HEADER_EMOJI_ID, '🃏')
-    if status in {'win', 'blackjack'}:
-        player_icon = '✅'
-    elif status in {'lose', 'bust'}:
-        player_icon = '❌'
-    elif status in {'tie', 'push'}:
-        player_icon = '🤝'
-    else:
-        player_icon = dealer_icon
+    player_icon = dealer_icon
 
     money_lines = (
-        f"💵 <b>Bet: {bet_display}</b>"
+        f"<b>Bet: {bet_display}</b>"
         if status == 'playing'
         else (
-            f"💵 <b>Bet: {bet_display}</b>\n"
-            f"🏆 <b>Win: {win_display}</b>\n"
-            f"💳 <b>Current balance: {bal_display}</b>"
+            f"<b>Bet: {bet_display}</b>\n"
+            f"<b>Win: {win_display}</b>\n"
+            f"<b>Current balance: {bal_display}</b>"
         )
     )
 
@@ -39894,6 +39910,7 @@ def _bj_postgame_buttons(user_id):
     """Post-game buttons: Play Again + bet size options."""
     REPLAY_EMOJI = _BJ_BUTTON_EMOJI_IDS.get("replay")
     DOUBLE_EMOJI = _BJ_BUTTON_EMOJI_IDS.get("double")
+    CARD_BACK_EMOJI = _BJ_BUTTON_EMOJI_IDS.get("card_back")
 
     rows = [
         [success_btn("Play Again", callback_data=f"bj_new_same_{user_id}", icon_custom_emoji_id=REPLAY_EMOJI)],
@@ -39902,7 +39919,13 @@ def _bj_postgame_buttons(user_id):
             primary_btn("All-in",     callback_data=f"bj_new_allin_{user_id}"),
             primary_btn("Double Bet", callback_data=f"bj_new_double_{user_id}", icon_custom_emoji_id=DOUBLE_EMOJI),
         ],
-        [primary_btn("📝 Change bet", callback_data=f"bj_changbet_{user_id}")],
+        [
+            primary_btn(
+                "Change bet",
+                callback_data=f"bj_changbet_{user_id}",
+                icon_custom_emoji_id=CARD_BACK_EMOJI,
+            )
+        ],
     ]
     return InlineKeyboardMarkup(rows)
 

@@ -39,6 +39,61 @@ class EmojiUiTests(unittest.TestCase):
             main._BJ_BUTTON_EMOJI_IDS["card_back"],
         )
 
+    def test_blackjack_controls_use_all_action_stickers_from_pack(self):
+        active = main._bj_buttons("emoji-ui-test", can_double=True)
+        hit, stand, double = active.inline_keyboard[0]
+        self.assertEqual([hit.text, stand.text, double.text], ["Hit", "Stand", "Double"])
+        self.assertEqual(hit.to_dict()["icon_custom_emoji_id"], main._BJ_BUTTON_EMOJI_IDS["hit"])
+        self.assertEqual(stand.to_dict()["icon_custom_emoji_id"], main._BJ_BUTTON_EMOJI_IDS["stand"])
+        self.assertEqual(double.to_dict()["icon_custom_emoji_id"], main._BJ_BUTTON_EMOJI_IDS["double"])
+
+        postgame = main._bj_postgame_buttons("emoji-ui-test")
+        play_again = postgame.inline_keyboard[0][0]
+        double_bet = postgame.inline_keyboard[1][2]
+        change_bet = postgame.inline_keyboard[2][0]
+        self.assertEqual(play_again.to_dict()["icon_custom_emoji_id"], main._BJ_BUTTON_EMOJI_IDS["replay"])
+        self.assertEqual(double_bet.to_dict()["icon_custom_emoji_id"], main._BJ_BUTTON_EMOJI_IDS["double"])
+        self.assertEqual(change_bet.text, "Change bet")
+        self.assertEqual(change_bet.to_dict()["icon_custom_emoji_id"], main._BJ_BUTTON_EMOJI_IDS["card_back"])
+        self.assertNotIn("📝", change_bet.text)
+
+    def test_blackjack_message_has_pack_cards_without_general_casino_emojis(self):
+        text = main._bj_render(
+            "emoji-ui-test",
+            [("A", "♠"), ("7", "♣")],
+            [("9", "♥"), ("K", "♦")],
+            "$20.00",
+            "$100.00",
+            "playing",
+        )
+
+        self.assertIn(f'emoji-id="{main._BJ_RANK_EMOJI["A"]}"', text)
+        self.assertIn(f'emoji-id="{main._BJ_RANK_EMOJI["7"]}"', text)
+        self.assertIn(f'emoji-id="{main._BJ_HEADER_EMOJI_ID}"', text)
+        self.assertIn("♠", text)
+        self.assertIn("♣", text)
+        self.assertNotIn("💵", text)
+        self.assertNotIn("💳", text)
+        self.assertNotIn("✅", text)
+        self.assertNotIn("❌", text)
+        self.assertNotIn("🤝", text)
+
+    def test_blackjack_hidden_dealer_card_uses_one_pack_card_back(self):
+        text = main._bj_render(
+            "emoji-ui-test",
+            [("A", "♠"), ("7", "♣")],
+            [("9", "♥"), ("K", "♦")],
+            "$20.00",
+            "$100.00",
+            "playing",
+        )
+
+        self.assertEqual(text.count(f'emoji-id="{main._BJ_HIDDEN_EMOJI_ID}"'), 3)
+        # Two card-backs are the dealer/player headers and one is the hidden
+        # dealer card. The suit row must not get a second hidden-card sticker.
+        self.assertEqual(text.count("🂠"), 1)
+        self.assertNotIn("💳", text)
+
     def test_balance_buttons_use_custom_icons_without_duplicate_state_emoji(self):
         balance_text, markup = main._build_balance_view("emoji-ui-test")
         buttons = [button for row in markup.inline_keyboard for button in row]
