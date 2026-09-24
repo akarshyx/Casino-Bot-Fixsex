@@ -39796,12 +39796,23 @@ def _strip_tg_emoji(html: str) -> str:
     """Strip <tg-emoji> tags, keeping the fallback text inside them."""
     return _TG_EMOJI_RE.sub(r'\1', html)
 
+
+def _bj_message_payload(text: str, kwargs: dict) -> tuple[str, dict]:
+    """Convert Blackjack's explicit pack tags into Telegram custom entities."""
+    rendered_text, entities = _render_html_premium(text, {})
+    send_kwargs = dict(kwargs)
+    send_kwargs["entities"] = entities
+    send_kwargs["parse_mode"] = None
+    return rendered_text, send_kwargs
+
+
 async def _bj_safe_reply(message, text: str, **kwargs):
     """Send a blackjack message; on Entity_text_invalid, retry with plain fallback text."""
     context_token = _plain_emoji_context_cv.set("blackjack")
     try:
+        rendered_text, send_kwargs = _bj_message_payload(text, kwargs)
         try:
-            return await message.reply_text(text, **kwargs)
+            return await message.reply_text(rendered_text, **send_kwargs)
         except Exception as e:
             if 'entity' in str(e).lower() or 'invalid' in str(e).lower():
                 logger.warning(f"[BJ] tg-emoji failed, falling back to plain text: {e}")
@@ -39815,8 +39826,9 @@ async def _bj_safe_edit(query, text: str, **kwargs):
     """Edit a blackjack message; on Entity_text_invalid, retry with plain fallback text."""
     context_token = _plain_emoji_context_cv.set("blackjack")
     try:
+        rendered_text, send_kwargs = _bj_message_payload(text, kwargs)
         try:
-            return await query.edit_message_text(text, **kwargs)
+            return await query.edit_message_text(rendered_text, **send_kwargs)
         except Exception as e:
             if 'entity' in str(e).lower() or 'invalid' in str(e).lower():
                 logger.warning(f"[BJ] tg-emoji edit failed, falling back to plain text: {e}")

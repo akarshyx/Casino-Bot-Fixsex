@@ -80,6 +80,20 @@ class EmojiUiTests(unittest.TestCase):
         self.assertNotIn("❌", text)
         self.assertNotIn("🤝", text)
 
+        rendered, kwargs = main._bj_message_payload(text, {"parse_mode": "HTML"})
+        custom_ids = [
+            entity.custom_emoji_id
+            for entity in kwargs["entities"]
+            if entity.type == "custom_emoji"
+        ]
+        self.assertIn(main._BJ_RANK_EMOJI["A"], custom_ids)
+        self.assertIn(main._BJ_RANK_EMOJI["7"], custom_ids)
+        self.assertIn(main._BJ_RANK_EMOJI["9"], custom_ids)
+        self.assertIn(main._BJ_RANK_EMOJI["K"], custom_ids)
+        self.assertIn(main._BJ_HIDDEN_EMOJI_ID, custom_ids)
+        self.assertEqual(kwargs["parse_mode"], None)
+        self.assertNotIn("<tg-emoji", rendered)
+
     def test_blackjack_hidden_dealer_card_uses_one_pack_card_back(self):
         text = main._bj_render(
             "emoji-ui-test",
