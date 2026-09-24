@@ -27,6 +27,19 @@ class OwnerWithdrawalCallbackTests(unittest.TestCase):
                     )
                 )
 
+    def test_withdrawal_callback_ids_keep_embedded_underscores(self):
+        withdrawal_id = "npw_123456789_1790217999"
+        callback = f"approve_np_withdrawal_{withdrawal_id}"
+
+        self.assertEqual(
+            callback[len("approve_np_withdrawal_"):],
+            withdrawal_id,
+        )
+        self.assertEqual(
+            f"reject_np_withdrawal_{withdrawal_id}"[len("reject_np_withdrawal_"):],
+            withdrawal_id,
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

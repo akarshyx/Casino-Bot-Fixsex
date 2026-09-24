@@ -1,1 +1,2 @@
 - [Telegram custom emoji entities](telegram-custom-emoji.md) — custom emoji entities require emoji-shaped fallback text or Telegram returns `Entity_text_invalid`.
+- [Telegram withdrawal callbacks](telegram-withdrawal-callbacks.md) — admin callback IDs contain underscores; preserve the full suffix and route owner actions before generic player-button guards.

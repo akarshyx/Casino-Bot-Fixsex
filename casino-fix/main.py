@@ -16555,6 +16555,68 @@ async def handle_owner_reject_np_withdrawal(query, context: ContextTypes.DEFAULT
     except Exception as e:
         logger.error(f"Error notifying user: {e}")
 
+
+async def handle_admin_withdrawal_callback(
+    update: Update, context: ContextTypes.DEFAULT_TYPE
+) -> None:
+    """Handle owner approval/rejection callbacks before the generic dispatcher.
+
+    Withdrawal IDs contain underscores (for example ``npw_<user>_<timestamp>``).
+    Keeping this routing in one early callback handler prevents the generic
+    player-button protection and legacy split-based routing from swallowing
+    owner actions.
+    """
+    query = update.callback_query
+    data = (query.data or "") if query else ""
+    if not query or not data:
+        return
+
+    if not is_owner_or_manager(query.from_user.id):
+        try:
+            await query.answer("❌ Only the owner/admin can manage withdrawals.", show_alert=True)
+        except Exception:
+            pass
+        return
+
+    try:
+        if data.startswith("approve_crypto_withdrawal_"):
+            withdrawal_id = data[len("approve_crypto_withdrawal_"):]
+            await handle_owner_approve_crypto_withdrawal(query, context, withdrawal_id)
+            try:
+                await query.answer("✅ Withdrawal approved.", show_alert=True)
+            except Exception:
+                pass
+            return
+
+        if data.startswith("approve_np_withdrawal_"):
+            withdrawal_id = data[len("approve_np_withdrawal_"):]
+            await handle_owner_approve_np_withdrawal(query, context, withdrawal_id)
+            try:
+                await query.answer("✅ Withdrawal approved.", show_alert=True)
+            except Exception:
+                pass
+            return
+
+        if data.startswith("reject_crypto_withdrawal_"):
+            withdrawal_id = data[len("reject_crypto_withdrawal_"):]
+            await show_withdrawal_reject_reasons(query, withdrawal_id, "cr")
+            return
+
+        if data.startswith("reject_np_withdrawal_"):
+            withdrawal_id = data[len("reject_np_withdrawal_"):]
+            await show_withdrawal_reject_reasons(query, withdrawal_id, "np")
+            return
+    except Exception:
+        logger.exception("[WITHDRAWAL CALLBACK] action failed: %s", data)
+        try:
+            await query.answer(
+                "❌ Withdrawal action failed. The balance was not changed; please try again.",
+                show_alert=True,
+            )
+        except Exception:
+            pass
+
+
 # Storage for pending tip confirmations: key = "tip_{sender_id}_{token}"
 _pending_tips = {}
 # Storage for pending admin addbal/setbal type selections: key = "adminbal_{admin_id}_{ts}"
@@ -27045,8 +27107,15 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         deposit_id = query.data.split("_")[2]
         await handle_deposit_rejection(query, context, deposit_id)
     elif query.data.startswith("withdraw_"):
-        withdrawal_id = query.data.split("_")[1]
-        await handle_withdrawal_approval(query, context, withdrawal_id)
+        # IDs such as npw_<user_id>_<timestamp> contain underscores. Split
+        # only at the callback prefix, otherwise this legacy route looks up
+        # just "npw" and reports that the withdrawal does not exist.
+        withdrawal_id = query.data[len("withdraw_"):]
+        withdrawal = pending_withdrawals.get(withdrawal_id)
+        if isinstance(withdrawal, dict) and "amount_usd" in withdrawal:
+            await handle_owner_approve_np_withdrawal(query, context, withdrawal_id)
+        else:
+            await handle_withdrawal_approval(query, context, withdrawal_id)
     elif query.data == "confirm_withdrawal":
         await handle_confirm_withdrawal(query, context)
     elif query.data == "cancel_withdrawal":
@@ -31089,6 +31158,13 @@ async def handle_deposit_rejection(query, context: ContextTypes.DEFAULT_TYPE, de
 
 async def handle_withdrawal_approval(query, context: ContextTypes.DEFAULT_TYPE, withdrawal_id: str) -> None:
     """Handle withdrawal approval."""
+    if not query.from_user or not is_owner_or_manager(query.from_user.id):
+        try:
+            await query.answer("❌ Only the owner/admin can approve withdrawals.", show_alert=True)
+        except Exception:
+            pass
+        return
+
     withdrawal = pending_withdrawals.get(withdrawal_id)
     if not withdrawal:
         try:
@@ -44244,6 +44320,14 @@ def main():
     application.add_handler(CommandHandler("setminwithdraw", setminwithdraw_command))
 
     application.add_handler(CallbackQueryHandler(tip_confirm_callback, pattern="^tip_(confirm|cancel):"))
+    # Owner withdrawal actions must be handled before the generic callback
+    # dispatcher.  The callback IDs include underscores and must remain intact.
+    application.add_handler(
+        CallbackQueryHandler(
+            handle_admin_withdrawal_callback,
+            pattern=r"^(approve_crypto_withdrawal_|reject_crypto_withdrawal_|approve_np_withdrawal_|reject_np_withdrawal_)",
+        )
+    )
     application.add_handler(CallbackQueryHandler(handle_callback))
     application.add_handler(MessageHandler(filters.StatusUpdate.WEB_APP_DATA, handle_sp_webapp_data))
     application.add_handler(MessageHandler(filters.Dice.ALL, handle_dr_dice_roll), group=-6)
