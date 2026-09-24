@@ -4403,7 +4403,7 @@ def _rc_end_keyboard(game_name: str, dice_format: str, bet_amount: float,
                 icon_custom_emoji_id=repeat_icon,
             ),
             primary_btn(
-                "×2 Double",
+                "Double",
                 callback_data=f"{game_name}_double_{dice_format}_{bet_amount}_{mode_char}",
                 icon_custom_emoji_id=double_icon,
             ),

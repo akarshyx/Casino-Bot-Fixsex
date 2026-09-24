@@ -21,7 +21,7 @@ class EmojiUiTests(unittest.TestCase):
         change_mode = markup.inline_keyboard[1][0]
 
         self.assertEqual(repeat.text, "Repeat")
-        self.assertEqual(double.text, "×2 Double")
+        self.assertEqual(double.text, "Double")
         self.assertEqual(change_mode.text, "Change mode")
         self.assertEqual(repeat.callback_data, "dice_repeat_1d6_10.0_h")
         self.assertEqual(double.callback_data, "dice_double_1d6_10.0_h")
