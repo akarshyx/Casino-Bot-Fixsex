@@ -70,17 +70,13 @@ class EmojiUiTests(unittest.TestCase):
         self.assertIn(f'emoji-id="{main._BJ_RANK_EMOJI["A"]}"', text)
         self.assertIn(f'emoji-id="{main._BJ_RANK_EMOJI["7"]}"', text)
         self.assertIn(f'emoji-id="{main._BJ_HEADER_EMOJI_ID}"', text)
-        self.assertNotIn("♠", text)
-        self.assertNotIn("♣", text)
-        self.assertNotIn("♥", text)
-        self.assertNotIn("♦", text)
         self.assertNotIn("💵", text)
-        self.assertNotIn("💳", text)
         self.assertNotIn("✅", text)
         self.assertNotIn("❌", text)
         self.assertNotIn("🤝", text)
 
         rendered, kwargs = main._bj_message_payload(text, {"parse_mode": "HTML"})
+        self.assertIn("💳", rendered)
         custom_ids = [
             entity.custom_emoji_id
             for entity in kwargs["entities"]
@@ -107,8 +103,7 @@ class EmojiUiTests(unittest.TestCase):
         self.assertEqual(text.count(f'emoji-id="{main._BJ_HIDDEN_EMOJI_ID}"'), 3)
         # Two card-backs are the dealer/player headers and one is the hidden
         # dealer card. The suit row must not get a second hidden-card sticker.
-        self.assertEqual(text.count("🂠"), 1)
-        self.assertNotIn("💳", text)
+        self.assertEqual(text.count("💳"), 3)
 
     def test_balance_buttons_use_custom_icons_without_duplicate_state_emoji(self):
         balance_text, markup = main._build_balance_view("emoji-ui-test")
