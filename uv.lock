@@ -1,0 +1,20 @@
+version = 1
+revision = 3
+requires-python = ">=3.13"
+
+[[package]]
+name = "lottie"
+version = "0.7.2"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/fb/34/a6f7bc3dee2887dad09d7583b2816a6918bc1b00777bd20c1feca2a453b5/lottie-0.7.2.tar.gz", hash = "sha256:85304ac152cd042c9fe98a527b5d136a31c6fe2aacd859ce1c58189bb946d127", size = 172091, upload-time = "2025-05-01T08:47:08.101Z" }
+
+[[package]]
+name = "repl-nix-workspace"
+version = "0.1.0"
+source = { virtual = "." }
+dependencies = [
+    { name = "lottie" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "lottie", specifier = ">=0.7.2" }]
