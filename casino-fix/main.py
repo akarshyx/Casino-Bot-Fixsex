@@ -39688,11 +39688,14 @@ _BJ_BUTTON_EMOJI_IDS = {
 _BJ_HIDDEN_EMOJI_ID = _BJ_BUTTON_EMOJI_IDS['card_back']
 _BJ_HEADER_EMOJI_ID = _BJ_BUTTON_EMOJI_IDS['card_back']
 
-# Fallback chars for rank custom emoji tags
+# Fallback emoji characters required by Telegram while rendering the exact
+# custom card sticker.  The pack metadata is intentionally used here: the
+# artwork for the last four entries is J/Q/K/A even though Telegram labels
+# those stickers with suit symbols.
 _BJ_RANK_FALLBACK = {
-    '2': '2', '3': '3', '4': '4', '5': '5', '6': '6',
-    '7': '7', '8': '8', '9': '9', '10': '🔟',
-    'J': 'J', 'Q': 'Q', 'K': 'K', 'A': 'A',
+    '2': '2️⃣', '3': '3️⃣', '4': '4️⃣', '5': '5️⃣', '6': '6️⃣',
+    '7': '7️⃣', '8': '8️⃣', '9': '9️⃣', '10': '🔟',
+    'J': '♠️', 'Q': '♣️', 'K': '♥️', 'A': '♦️',
 }
 _BJ_SUIT_FALLBACK = {
     '♠': '♠️', '♣': '♣️', '♥': '♥️', '♦': '♦️',
@@ -39709,7 +39712,7 @@ def _bj_card_tag(rank):
     return f'<b>{rank}</b>'
 
 def _bj_hidden_tag():
-    return f'<tg-emoji emoji-id="{_BJ_HIDDEN_EMOJI_ID}">🂠</tg-emoji>'
+    return f'<tg-emoji emoji-id="{_BJ_HIDDEN_EMOJI_ID}">💳</tg-emoji>'
 
 def _bj_tg(emoji_id, fallback):
     """Wrap in <tg-emoji> tag for custom emoji rendering."""
@@ -39740,7 +39743,7 @@ def _bj_hand_display_rows(hand, hide_second=False):
         if card is None:
             continue
         if hide_second and i == 1:
-            hidden = f'<tg-emoji emoji-id="{_BJ_HIDDEN_EMOJI_ID}">🂠</tg-emoji>'
+            hidden = f'<tg-emoji emoji-id="{_BJ_HIDDEN_EMOJI_ID}">💳</tg-emoji>'
             ranks.append(hidden)
             # The Blackjack pack has one card-back sticker, not a separate
             # suit sticker.  Show it once on the rank row and leave the suit
@@ -39875,7 +39878,7 @@ def _bj_render(
     # The Blackjack pack's card-back is the only header/status artwork.  Do
     # not let the general casino emoji interceptor replace these with random
     # dice, gems, checks, or other game-pack symbols.
-    dealer_icon = _bj_tg(_BJ_HEADER_EMOJI_ID, '🃏')
+    dealer_icon = _bj_tg(_BJ_HEADER_EMOJI_ID, '💳')
     player_icon = dealer_icon
 
     money_lines = (
