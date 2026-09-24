@@ -39892,7 +39892,6 @@ def _bj_render(
     )
 
     return (
-        "<blockquote>"
         f"{dealer_icon} <b>Dealer's hand {d_label}</b>\n"
         f"{dealer_ranks}\n"
         f"\n"
@@ -39900,7 +39899,6 @@ def _bj_render(
         f"{player_ranks}\n"
         f"\n"
         f"{money_lines}"
-        "</blockquote>"
     )
 
 def _bj_buttons(user_id, can_double=True, can_split=False):

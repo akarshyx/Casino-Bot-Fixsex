@@ -70,6 +70,8 @@ class EmojiUiTests(unittest.TestCase):
         self.assertIn(f'emoji-id="{main._BJ_RANK_EMOJI["A"]}"', text)
         self.assertIn(f'emoji-id="{main._BJ_RANK_EMOJI["7"]}"', text)
         self.assertIn(f'emoji-id="{main._BJ_HEADER_EMOJI_ID}"', text)
+        self.assertNotIn("<blockquote>", text)
+        self.assertNotIn("</blockquote>", text)
         self.assertNotIn("💵", text)
         self.assertNotIn("✅", text)
         self.assertNotIn("❌", text)
